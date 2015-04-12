@@ -23,7 +23,11 @@ MainWindow::MainWindow(QWidget *parent) :
         qApp->quit(); //display error
 
     connect(&area, SIGNAL(measurePointAdded(int,int)), this, SLOT(on_measurePointAdded(int,int)));
-    connect(&configDialog, SIGNAL(accepted()), this, SLOT(on_configureDialog_accepted()));
+    connect(&configDialog, SIGNAL(accepted()), this, SLOT(on_configDialogAccepted()));
+    connect(&plotConfigureDialog, SIGNAL(accepted()),
+            this, SLOT(on_plotConfigureDialogAccepted()));
+    connect(ui->selectedPoints->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            this, SLOT(on_selectedPointsActivated(QModelIndex,QModelIndex)));
 
     area.setDataSeries(&dataSeries);
     ui->gridLayout->replaceWidget(ui->placeHolder, &area);
@@ -35,6 +39,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionMeasure->setChecked(settings.value("measure", false).toBool());
 
     resize(1024,500);
+
+    xLabel = "x axis";
+    yLabel = "y axis";
 }
 
 MainWindow::~MainWindow()
@@ -71,6 +78,7 @@ void MainWindow::on_actionPan_toggled(bool toggled)
     if (toggled)
     {
         ui->actionMeasure->setChecked(false);
+        area.setSelectedPoint(-1);
         area.update();
     }
     settings.setValue("pan", toggled);
@@ -103,6 +111,7 @@ void MainWindow::on_deleteButton_clicked()
         ui->selectedPoints->model()->removeRow(index.row());
     }
     updateMeasures();
+    area.setSelectedPoint(-1);
     area.update();
 }
 
@@ -146,7 +155,7 @@ void MainWindow::on_configureButton_clicked()
     configDialog.show();
 }
 
-void MainWindow::on_configureDialog_accepted()
+void MainWindow::on_configDialogAccepted()
 {
     int index = ui->seriesCombo->currentIndex();
     DataArray* array = dataSeries[index];
@@ -160,4 +169,26 @@ void MainWindow::on_configureDialog_accepted()
     pixmap.fill(array->color);
     QIcon icon(pixmap);
     ui->seriesCombo->setItemIcon(index, icon);
+}
+
+void MainWindow::on_selectedPointsActivated(QModelIndex index, QModelIndex previous)
+{
+    DataArray* array = dataSeries[ui->seriesCombo->currentIndex()];
+    area.setSelectedPoint(array->selectedPoints.item(index.row(), 0)->data().toInt());
+    area.update();
+}
+
+void MainWindow::on_actionConfigure_triggered()
+{
+    plotConfigureDialog.setXLabel(xLabel);
+    plotConfigureDialog.setYLabel(yLabel);
+    plotConfigureDialog.show();
+}
+
+void MainWindow::on_plotConfigureDialogAccepted()
+{
+    xLabel = plotConfigureDialog.xLabel();
+    yLabel = plotConfigureDialog.yLabel();
+    ui->xAxisLabel->setText(xLabel);
+    ui->yAxisLabel->setText(yLabel);
 }

@@ -34,6 +34,7 @@ public:
     QAction *actionX_zoom;
     QAction *actionPan;
     QAction *actionMeasure;
+    QAction *actionConfigure;
     QWidget *centralwidget;
     QGridLayout *gridLayout_2;
     QGridLayout *gridLayout;
@@ -53,19 +54,31 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QStringLiteral("MainWindow"));
-        MainWindow->resize(388, 409);
+        MainWindow->resize(524, 412);
         actionY_zoom = new QAction(MainWindow);
         actionY_zoom->setObjectName(QStringLiteral("actionY_zoom"));
         actionY_zoom->setCheckable(true);
+        QIcon icon(QIcon::fromTheme(QStringLiteral("zoom-in-y")));
+        actionY_zoom->setIcon(icon);
         actionX_zoom = new QAction(MainWindow);
         actionX_zoom->setObjectName(QStringLiteral("actionX_zoom"));
         actionX_zoom->setCheckable(true);
+        QIcon icon1(QIcon::fromTheme(QStringLiteral("zoom-in-x")));
+        actionX_zoom->setIcon(icon1);
         actionPan = new QAction(MainWindow);
         actionPan->setObjectName(QStringLiteral("actionPan"));
         actionPan->setCheckable(true);
+        QIcon icon2(QIcon::fromTheme(QStringLiteral("transform-move")));
+        actionPan->setIcon(icon2);
         actionMeasure = new QAction(MainWindow);
         actionMeasure->setObjectName(QStringLiteral("actionMeasure"));
         actionMeasure->setCheckable(true);
+        QIcon icon3(QIcon::fromTheme(QStringLiteral("measure")));
+        actionMeasure->setIcon(icon3);
+        actionConfigure = new QAction(MainWindow);
+        actionConfigure->setObjectName(QStringLiteral("actionConfigure"));
+        QIcon icon4(QIcon::fromTheme(QStringLiteral("configure")));
+        actionConfigure->setIcon(icon4);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QStringLiteral("centralwidget"));
         centralwidget->setMinimumSize(QSize(0, 0));
@@ -80,6 +93,7 @@ public:
         sizePolicy.setVerticalStretch(0);
         sizePolicy.setHeightForWidth(xAxisLabel->sizePolicy().hasHeightForWidth());
         xAxisLabel->setSizePolicy(sizePolicy);
+        xAxisLabel->setTextFormat(Qt::RichText);
 
         gridLayout->addWidget(xAxisLabel, 7, 1, 1, 1, Qt::AlignHCenter);
 
@@ -142,28 +156,21 @@ public:
         sizePolicy5.setHeightForWidth(configureButton->sizePolicy().hasHeightForWidth());
         configureButton->setSizePolicy(sizePolicy5);
         configureButton->setMinimumSize(QSize(0, 35));
-        QIcon icon;
-        QString iconThemeName = QStringLiteral("configure");
-        if (QIcon::hasThemeIcon(iconThemeName)) {
-            icon = QIcon::fromTheme(iconThemeName);
-        } else {
-            icon.addFile(QStringLiteral(""), QSize(), QIcon::Normal, QIcon::Off);
-        }
-        configureButton->setIcon(icon);
+        configureButton->setIcon(icon4);
 
         gridLayout->addWidget(configureButton, 0, 4, 2, 1, Qt::AlignTop);
 
         deleteButton = new QPushButton(centralwidget);
         deleteButton->setObjectName(QStringLiteral("deleteButton"));
         deleteButton->setMinimumSize(QSize(0, 35));
-        QIcon icon1;
-        iconThemeName = QStringLiteral("edit-delete");
+        QIcon icon5;
+        QString iconThemeName = QStringLiteral("edit-delete");
         if (QIcon::hasThemeIcon(iconThemeName)) {
-            icon1 = QIcon::fromTheme(iconThemeName);
+            icon5 = QIcon::fromTheme(iconThemeName);
         } else {
-            icon1.addFile(QStringLiteral(""), QSize(), QIcon::Normal, QIcon::Off);
+            icon5.addFile(QStringLiteral(""), QSize(), QIcon::Normal, QIcon::Off);
         }
-        deleteButton->setIcon(icon1);
+        deleteButton->setIcon(icon5);
 
         gridLayout->addWidget(deleteButton, 2, 4, 1, 1);
 
@@ -173,19 +180,22 @@ public:
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName(QStringLiteral("menubar"));
-        menubar->setGeometry(QRect(0, 0, 388, 31));
+        menubar->setGeometry(QRect(0, 0, 524, 31));
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName(QStringLiteral("statusbar"));
         MainWindow->setStatusBar(statusbar);
         toolBar = new QToolBar(MainWindow);
         toolBar->setObjectName(QStringLiteral("toolBar"));
+        toolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         MainWindow->addToolBar(Qt::TopToolBarArea, toolBar);
 
         toolBar->addAction(actionY_zoom);
         toolBar->addAction(actionX_zoom);
         toolBar->addAction(actionPan);
         toolBar->addAction(actionMeasure);
+        toolBar->addSeparator();
+        toolBar->addAction(actionConfigure);
 
         retranslateUi(MainWindow);
 
@@ -199,6 +209,7 @@ public:
         actionX_zoom->setText(QApplication::translate("MainWindow", "X zoom", 0));
         actionPan->setText(QApplication::translate("MainWindow", "Pan", 0));
         actionMeasure->setText(QApplication::translate("MainWindow", "Measure", 0));
+        actionConfigure->setText(QApplication::translate("MainWindow", "Configure", 0));
         xAxisLabel->setText(QApplication::translate("MainWindow", "X axis", 0));
         yAxisLabel->setText(QApplication::translate("MainWindow", "Y axis", 0));
         measures->setText(QString());

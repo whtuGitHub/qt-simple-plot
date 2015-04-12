@@ -17,14 +17,16 @@ SOURCES += main.cpp\
     dataseries.cpp \
     dataarray.cpp \
     drawingarea.cpp \
-    configdialog.cpp
+    configdialog.cpp \
+    plotconfiguredialog.cpp
 
 HEADERS  += mainwindow.h \
     dataseries.h \
     dataarray.h \
     drawingarea.h \
-    configdialog.h
+    configdialog.h \
+    plotconfiguredialog.h
 
 FORMS    += mainwindow.ui \
-    mainwindow.ui \
-    configdialog.ui
+    configdialog.ui \
+    plotconfiguredialog.ui

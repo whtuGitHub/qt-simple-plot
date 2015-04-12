@@ -7,7 +7,7 @@ ConfigDialog::ConfigDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(&colorDialog, SIGNAL(accepted()), this, SLOT(on_colorDialog_accepted()));
+    connect(&colorDialog, SIGNAL(accepted()), this, SLOT(on_colorDialogAccepted()));
 }
 
 ConfigDialog::~ConfigDialog()
@@ -46,7 +46,7 @@ void ConfigDialog::on_pushButton_clicked()
     colorDialog.show();
 }
 
-void ConfigDialog::on_colorDialog_accepted()
+void ConfigDialog::on_colorDialogAccepted()
 {
     setColor(colorDialog.currentColor());
 }

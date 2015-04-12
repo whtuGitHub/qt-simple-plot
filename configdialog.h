@@ -24,7 +24,7 @@ public:
 private slots:
     void on_pushButton_clicked();
 
-    void on_colorDialog_accepted();
+    void on_colorDialogAccepted();
 
 private:
     Ui::ConfigDialog *ui;

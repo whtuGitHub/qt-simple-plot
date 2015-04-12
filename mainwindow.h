@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <drawingarea.h>
 #include <configdialog.h>
+#include <plotconfiguredialog.h>
 
 namespace Ui {
 class MainWindow;
@@ -37,7 +38,13 @@ private slots:
 
     void on_configureButton_clicked();
 
-    void on_configureDialog_accepted();
+    void on_configDialogAccepted();
+
+    void on_plotConfigureDialogAccepted();
+
+    void on_selectedPointsActivated(QModelIndex index, QModelIndex previous);
+
+    void on_actionConfigure_triggered();
 
 private:
     Ui::MainWindow *ui;
@@ -45,6 +52,10 @@ private:
     DataSeries dataSeries;
     DrawingArea area;
     ConfigDialog configDialog;
+    PlotConfigureDialog plotConfigureDialog;
+
+    QString xLabel;
+    QString yLabel;
 
     void updateMeasures();
 };

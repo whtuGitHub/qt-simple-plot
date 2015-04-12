@@ -31,6 +31,11 @@ void DrawingArea::setActiveSeries(int index)
     selectedArray = index;
 }
 
+void DrawingArea::setSelectedPoint(int index)
+{
+    selectedPoint = index;
+}
+
 void DrawingArea::paintEvent(QPaintEvent *event)
 {
     QPainter painter;
@@ -176,7 +181,7 @@ void DrawingArea::renderView(QPainter &painter)
 
         painter.strokePath(path, pen);
 
-        pen.setWidth(10);
+        pen.setWidth(8);
         pen.setCapStyle(Qt::RoundCap);
         painter.setPen(pen);
         for (int j=0; j<array->selectedPoints.rowCount(); j++)
@@ -186,16 +191,13 @@ void DrawingArea::renderView(QPainter &painter)
     }
 
     //measure
-    if (settings.value("measure").toBool())
+    if (selectedPoint > -1)
     {
-        if (selectedPoint > -1)
-        {
-            pen.setColor(dataSeries->at(selectedArray)->color);
-            pen.setWidth(8);
-            pen.setCapStyle(Qt::SquareCap);
-            painter.setPen(pen);
-            painter.drawPoint(pointToLocal(dataSeries->at(selectedArray)->at(selectedPoint)));
-        }
+        pen.setColor(dataSeries->at(selectedArray)->color);
+        pen.setWidth(8);
+        pen.setCapStyle(Qt::SquareCap);
+        painter.setPen(pen);
+        painter.drawPoint(pointToLocal(dataSeries->at(selectedArray)->at(selectedPoint)));
     }
 
     //axes

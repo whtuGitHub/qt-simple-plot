@@ -17,6 +17,7 @@ public:
 
     void setDataSeries(DataSeries* series);
     void setActiveSeries(int index);
+    void setSelectedPoint(int index);
     void renderView(QPainter &painter);
 
 protected:
