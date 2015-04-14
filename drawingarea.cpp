@@ -36,6 +36,28 @@ void DrawingArea::setSelectedPoint(int index)
     selectedPoint = index;
 }
 
+void DrawingArea::defineView(float xMin, float xMax, float yMin, float yMax)
+{
+    if (xMax > xMin)
+    {
+        this->xMin = xMin;
+        this->xMax = xMax;
+    }
+    if (yMax > yMin)
+    {
+        this->yMin = yMin;
+        this->yMax = yMax;
+    }
+}
+
+void DrawingArea::getView(float &xMin, float &xMax, float &yMin, float &yMax)
+{
+    xMin = this->xMin;
+    xMax = this->xMax;
+    yMin = this->yMin;
+    yMax = this->yMax;
+}
+
 void DrawingArea::paintEvent(QPaintEvent *event)
 {
     QPainter painter;

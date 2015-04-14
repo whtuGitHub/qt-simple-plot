@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setOrganizationName("Marco Scarpetta");
     a.setOrganizationDomain("marcoscarpetta.github.io");
-    a.setApplicationName("sdvm");
+    a.setApplicationName("qt-simple-plot");
 
     MainWindow w;
     w.show();

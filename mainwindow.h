@@ -3,6 +3,7 @@
 
 #include <QApplication>
 #include <QMainWindow>
+#include <QFileDialog>
 #include <drawingarea.h>
 #include <configdialog.h>
 #include <plotconfiguredialog.h>
@@ -46,18 +47,31 @@ private slots:
 
     void on_actionConfigure_triggered();
 
+    void on_actionOpen_triggered();
+
+    void on_actionSave_triggered();
+
+    void on_fileDialogAccepted(QString fileName);
+
 private:
     Ui::MainWindow *ui;
+    QString inputFile;
     QSettings settings;
     DataSeries dataSeries;
     DrawingArea area;
     ConfigDialog configDialog;
     PlotConfigureDialog plotConfigureDialog;
+    QFileDialog fileDialog;
+    QString savedFile;
 
     QString xLabel;
     QString yLabel;
 
     void updateMeasures();
+
+    void loadFile(QString fileName);
+    void save(QString savingFile);
+    bool restore(QString savedFile);
 };
 
 #endif // MAINWINDOW_H

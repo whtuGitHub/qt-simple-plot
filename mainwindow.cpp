@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QXmlStreamWriter>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -9,18 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     if (qApp->arguments().size() > 1)
     {
-        dataSeries.loadFromFile(qApp->arguments().at(1));
-
-        for (int i=0; i<dataSeries.size(); i++)
-        {
-            QPixmap pixmap(20, 20);
-            pixmap.fill(dataSeries[i]->color);
-            QIcon icon(pixmap);
-            ui->seriesCombo->addItem(icon, dataSeries[i]->name, i);
-        }
+        loadFile(qApp->arguments().at(1));
     }
-    else
-        qApp->quit(); //display error
 
     connect(&area, SIGNAL(measurePointAdded(int,int)), this, SLOT(on_measurePointAdded(int,int)));
     connect(&configDialog, SIGNAL(accepted()), this, SLOT(on_configDialogAccepted()));
@@ -28,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(on_plotConfigureDialogAccepted()));
     connect(ui->selectedPoints->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(on_selectedPointsActivated(QModelIndex,QModelIndex)));
+    connect(&fileDialog, SIGNAL(fileSelected(QString)), this, SLOT(on_fileDialogAccepted(QString)));
 
     area.setDataSeries(&dataSeries);
     ui->gridLayout->replaceWidget(ui->placeHolder, &area);
@@ -47,6 +39,28 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::loadFile(QString fileName)
+{
+    while (ui->seriesCombo->count())
+        ui->seriesCombo->removeItem(0);
+
+    savedFile = fileName;
+    if (!restore(fileName))
+    {
+        savedFile = "";
+        inputFile = fileName;
+        dataSeries.loadFromFile(inputFile);
+
+        for (int i=0; i<dataSeries.size(); i++)
+        {
+            QPixmap pixmap(20, 20);
+            pixmap.fill(dataSeries[i]->color);
+            QIcon icon(pixmap);
+            ui->seriesCombo->addItem(icon, dataSeries[i]->name, i);
+        }
+    }
 }
 
 void MainWindow::on_measurePointAdded(int series, int pointIndex)
@@ -100,8 +114,11 @@ void MainWindow::on_actionMeasure_toggled(bool toggled)
 
 void MainWindow::on_seriesCombo_currentIndexChanged(int index)
 {
-    area.setActiveSeries(index);
-    ui->selectedPoints->setModel(&dataSeries[index]->selectedPoints);
+    if (index > -1)
+    {
+        area.setActiveSeries(index);
+        ui->selectedPoints->setModel(&dataSeries[index]->selectedPoints);
+    }
 }
 
 void MainWindow::on_deleteButton_clicked()
@@ -191,4 +208,177 @@ void MainWindow::on_plotConfigureDialogAccepted()
     yLabel = plotConfigureDialog.yLabel();
     ui->xAxisLabel->setText(xLabel);
     ui->yAxisLabel->setText(yLabel);
+}
+
+void MainWindow::save(QString savingFile)
+{
+    QFile file(savingFile);
+    file.open(QFile::WriteOnly);
+
+    QXmlStreamWriter stream(&file);
+    stream.setAutoFormatting(true);
+    stream.writeStartDocument();
+
+    stream.writeStartElement("qtSimplePlot");
+    stream.writeAttribute("version", "1.0");
+
+    stream.writeTextElement("inputFile", inputFile);
+    stream.writeTextElement("xLabel", xLabel);
+    stream.writeTextElement("yLabel", yLabel);
+
+    float xMin, xMax, yMin, yMax;
+    area.getView(xMin, xMax, yMin, yMax);
+    stream.writeTextElement("xMin", QString::number(xMin));
+    stream.writeTextElement("xMax", QString::number(xMax));
+    stream.writeTextElement("yMin", QString::number(yMin));
+    stream.writeTextElement("yMax", QString::number(yMax));
+
+    stream.writeStartElement("dataSeries");
+    for (int i=0; i<dataSeries.size(); i++)
+    {
+        stream.writeStartElement("array");
+        stream.writeAttribute("index", QString::number(i));
+        stream.writeTextElement("name", dataSeries[i]->name);
+        stream.writeTextElement("red", QString::number(dataSeries[i]->color.red()));
+        stream.writeTextElement("green", QString::number(dataSeries[i]->color.green()));
+        stream.writeTextElement("blue", QString::number(dataSeries[i]->color.blue()));
+
+        stream.writeStartElement("selectedPoints");
+        for (int j=0; j<dataSeries[i]->selectedPoints.rowCount(); j++)
+        {
+            stream.writeTextElement("index", QString::number(dataSeries[i]->selectedPoints.item(j, 0)->data().toInt()));
+        }
+        stream.writeEndElement();
+
+        stream.writeEndElement();
+    }
+    stream.writeEndElement();
+
+    stream.writeEndElement();
+    stream.writeEndDocument();
+}
+
+bool MainWindow::restore(QString savedFile)
+{
+    QFile file(savedFile);
+    file.open(QFile::ReadOnly);
+
+    QXmlStreamReader reader(&file);
+    reader.readNextStartElement();
+
+    if (reader.name() == "qtSimplePlot" && reader.attributes().value("version") == "1.0")
+    {
+        reader.readNextStartElement();
+        inputFile = reader.readElementText();
+
+        dataSeries.loadFromFile(inputFile);
+        area.setDataSeries(&dataSeries);
+        for (int i=0; i<dataSeries.size(); i++)
+        {
+            QPixmap pixmap(20, 20);
+            pixmap.fill(dataSeries[i]->color);
+            QIcon icon(pixmap);
+            ui->seriesCombo->addItem(icon, dataSeries[i]->name, i);
+        }
+
+        reader.readNextStartElement();
+        xLabel = reader.readElementText();
+
+        reader.readNextStartElement();
+        yLabel = reader.readElementText();
+
+        ui->xAxisLabel->setText(xLabel);
+        ui->yAxisLabel->setText(yLabel);
+
+        float xMin, xMax, yMin, yMax;
+        reader.readNextStartElement();
+        xMin = reader.readElementText().toFloat();
+        reader.readNextStartElement();
+        xMax = reader.readElementText().toFloat();
+        reader.readNextStartElement();
+        yMin = reader.readElementText().toFloat();
+        reader.readNextStartElement();
+        yMax = reader.readElementText().toFloat();
+
+        area.defineView(xMin, xMax, yMin, yMax);
+
+        reader.readNextStartElement(); //dataSeries
+        reader.readNextStartElement(); //array
+
+        while (reader.name() == "array")
+        {
+            int i = reader.attributes().value("index").toInt();
+            if (i < dataSeries.size())
+            {
+                reader.readNextStartElement();
+                dataSeries[i]->name = reader.readElementText();
+
+                int r,g,b;
+                reader.readNextStartElement();
+                r = reader.readElementText().toInt();
+                reader.readNextStartElement();
+                g = reader.readElementText().toInt();
+                reader.readNextStartElement();
+                b = reader.readElementText().toInt();
+                dataSeries[i]->color = QColor(r,g,b);
+
+                QPixmap pixmap(20, 20);
+                pixmap.fill(dataSeries[i]->color);
+                QIcon icon(pixmap);
+                ui->seriesCombo->setItemText(i, dataSeries[i]->name);
+                ui->seriesCombo->setItemIcon(i, icon);
+
+                reader.readNextStartElement();
+                if (reader.name() == "selectedPoints")
+                {
+                    reader.readNextStartElement();
+                    while (reader.name() == "index")
+                    {
+                        on_measurePointAdded(i, reader.readElementText().toInt());
+                        reader.readNextStartElement();
+                    }
+                }
+
+                while (!(reader.name() == "array" && reader.tokenType() == QXmlStreamReader::StartElement) &&
+                       reader.name() != "qtSimplePlot")
+                {
+                    reader.readNext();
+                }
+
+            }
+        }
+        area.update();
+        return true;
+    }
+    return false;
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
+    fileDialog.show();
+}
+
+void MainWindow::on_actionSave_triggered()
+{
+    if (savedFile.length() == 0)
+    {
+        fileDialog.setAcceptMode(QFileDialog::AcceptSave);
+        fileDialog.show();
+    }
+    else
+        save(savedFile);
+}
+
+void MainWindow::on_fileDialogAccepted(QString fileName)
+{
+    if (fileDialog.acceptMode() == QFileDialog::AcceptOpen)
+    {
+        loadFile(fileName);
+    }
+
+    else if (fileDialog.acceptMode() == QFileDialog::AcceptSave)
+    {
+        save(fileName);
+    }
 }

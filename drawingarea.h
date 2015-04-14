@@ -18,6 +18,8 @@ public:
     void setDataSeries(DataSeries* series);
     void setActiveSeries(int index);
     void setSelectedPoint(int index);
+    void defineView(float xMin, float xMax, float yMin, float yMax);
+    void getView(float& xMin, float& xMax, float& yMin, float& yMax);
     void renderView(QPainter &painter);
 
 protected:

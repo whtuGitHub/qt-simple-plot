@@ -12,6 +12,9 @@ DataSeries::~DataSeries()
 
 int DataSeries::loadFromFile(QString filename)
 {
+    while (size() > 0)
+        removeFirst();
+
     QFile file(filename);
     if (!file.open(QFile::ReadOnly))
         return 1;
@@ -35,7 +38,8 @@ int DataSeries::loadFromFile(QString filename)
             QStringList line = QString(file.readLine()).split(" ", QString::SkipEmptyParts);
             for (int i=0; i<size(); i++)
             {
-                at(i)->append(QPointF(line[2*i].toFloat(), line[2*i+1].toFloat()));
+                if (2*i+1 < line.size())
+                    at(i)->append(QPointF(line[2*i].toFloat(), line[2*i+1].toFloat()));
             }
         }
 
