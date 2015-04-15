@@ -397,6 +397,8 @@ void MainWindow::on_fileDialogAccepted(QString fileName)
             QPainter painter;
             painter.begin(&gen);
             area.renderView(painter);
+
+            exporting = false;
         }
         else
             save(fileName);
