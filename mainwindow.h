@@ -53,6 +53,8 @@ private slots:
 
     void on_fileDialogAccepted(QString fileName);
 
+    void on_actionExport_triggered();
+
 private:
     Ui::MainWindow *ui;
     QString inputFile;
@@ -63,6 +65,7 @@ private:
     PlotConfigureDialog plotConfigureDialog;
     QFileDialog fileDialog;
     QString savedFile;
+    bool exporting;
 
     QString xLabel;
     QString yLabel;

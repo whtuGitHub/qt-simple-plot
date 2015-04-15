@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QXmlStreamWriter>
+#include <QtSvg/QSvgGenerator>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -12,6 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         loadFile(qApp->arguments().at(1));
     }
+    else
+        area.setDataSeries(0);
 
     connect(&area, SIGNAL(measurePointAdded(int,int)), this, SLOT(on_measurePointAdded(int,int)));
     connect(&configDialog, SIGNAL(accepted()), this, SLOT(on_configDialogAccepted()));
@@ -21,7 +24,6 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(on_selectedPointsActivated(QModelIndex,QModelIndex)));
     connect(&fileDialog, SIGNAL(fileSelected(QString)), this, SLOT(on_fileDialogAccepted(QString)));
 
-    area.setDataSeries(&dataSeries);
     ui->gridLayout->replaceWidget(ui->placeHolder, &area);
     area.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -60,6 +62,7 @@ void MainWindow::loadFile(QString fileName)
             QIcon icon(pixmap);
             ui->seriesCombo->addItem(icon, dataSeries[i]->name, i);
         }
+        area.setDataSeries(&dataSeries);
     }
 }
 
@@ -356,6 +359,11 @@ bool MainWindow::restore(QString savedFile)
 void MainWindow::on_actionOpen_triggered()
 {
     fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
+    QStringList filters;
+    filters << "Text files (*.txt *.data *)"
+            << "QPS files (*.qps)";
+
+    fileDialog.setNameFilters(filters);
     fileDialog.show();
 }
 
@@ -364,6 +372,7 @@ void MainWindow::on_actionSave_triggered()
     if (savedFile.length() == 0)
     {
         fileDialog.setAcceptMode(QFileDialog::AcceptSave);
+        fileDialog.setNameFilter("QPS files (*.qps)");
         fileDialog.show();
     }
     else
@@ -379,6 +388,25 @@ void MainWindow::on_fileDialogAccepted(QString fileName)
 
     else if (fileDialog.acceptMode() == QFileDialog::AcceptSave)
     {
-        save(fileName);
+        if (exporting)
+        {
+            QSvgGenerator gen;
+            gen.setFileName(fileName);
+            gen.setSize(area.size());
+
+            QPainter painter;
+            painter.begin(&gen);
+            area.renderView(painter);
+        }
+        else
+            save(fileName);
     }
+}
+
+void MainWindow::on_actionExport_triggered()
+{
+    exporting = true;
+    fileDialog.setAcceptMode(QFileDialog::AcceptSave);
+    fileDialog.setNameFilter("SVG files (*.svg)");
+    fileDialog.show();
 }

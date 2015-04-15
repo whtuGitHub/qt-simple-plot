@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>705</width>
+    <width>738</width>
     <height>412</height>
    </rect>
   </property>
@@ -164,7 +164,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>705</width>
+     <width>738</width>
      <height>31</height>
     </rect>
    </property>
@@ -192,6 +192,7 @@
    <addaction name="separator"/>
    <addaction name="actionOpen"/>
    <addaction name="actionSave"/>
+   <addaction name="actionExport"/>
   </widget>
   <action name="actionY_zoom">
    <property name="checkable">
@@ -257,7 +258,9 @@
   </action>
   <action name="actionOpen">
    <property name="icon">
-    <iconset theme="document-open"/>
+    <iconset theme="document-open">
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -265,10 +268,20 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset theme="document-save"/>
+    <iconset theme="document-save">
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>Save</string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="icon">
+    <iconset theme="document-export"/>
+   </property>
+   <property name="text">
+    <string>Export</string>
    </property>
   </action>
  </widget>

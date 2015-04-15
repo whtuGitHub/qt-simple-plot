@@ -20,10 +20,13 @@ void DrawingArea::setDataSeries(DataSeries *series)
 {
     dataSeries = series;
 
-    dataSeries->xMinMax(xMin, xMax);
-    dataSeries->yMinMax(yMin, yMax);
+    if (series != 0)
+    {
+        dataSeries->xMinMax(xMin, xMax);
+        dataSeries->yMinMax(yMin, yMax);
 
-    update();
+        update();
+    }
 }
 
 void DrawingArea::setActiveSeries(int index)
@@ -60,11 +63,14 @@ void DrawingArea::getView(float &xMin, float &xMax, float &yMin, float &yMax)
 
 void DrawingArea::paintEvent(QPaintEvent *event)
 {
-    QPainter painter;
+    if (dataSeries != 0)
+    {
+        QPainter painter;
 
-    painter.begin(this);
+        painter.begin(this);
 
-    renderView(painter);
+        renderView(painter);
+    }
 }
 
 void DrawingArea::wheelEvent(QWheelEvent *event)
