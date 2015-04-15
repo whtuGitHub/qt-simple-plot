@@ -20,8 +20,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&configDialog, SIGNAL(accepted()), this, SLOT(on_configDialogAccepted()));
     connect(&plotConfigureDialog, SIGNAL(accepted()),
             this, SLOT(on_plotConfigureDialogAccepted()));
-    connect(ui->selectedPoints->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-            this, SLOT(on_selectedPointsActivated(QModelIndex,QModelIndex)));
     connect(&fileDialog, SIGNAL(fileSelected(QString)), this, SLOT(on_fileDialogAccepted(QString)));
 
     ui->gridLayout->replaceWidget(ui->placeHolder, &area);
@@ -121,6 +119,11 @@ void MainWindow::on_seriesCombo_currentIndexChanged(int index)
     {
         area.setActiveSeries(index);
         ui->selectedPoints->setModel(&dataSeries[index]->selectedPoints);
+
+        connect(ui->selectedPoints->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+                this, SLOT(on_selectedPointsActivated(QModelIndex,QModelIndex)));
+
+        updateMeasures();
     }
 }
 
@@ -161,6 +164,7 @@ void MainWindow::updateMeasures()
         text += QString::number((p2.y()-p1.y())/(p2.x()-p1.x()));
         text += QString("\nMin:\n") += QString::number(min);
         text += QString("\nMax:\n") += QString::number(max);
+        text += QString("\nPeak to peak:\n") += QString::number(max-min);
         ui->measures->setText(text);
     }
     else

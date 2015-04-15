@@ -130,7 +130,7 @@ void DrawingArea::mouseMoveEvent(QMouseEvent * event)
         lastPosition = event->pos();
     }
 
-    else if (settings.value("measure").toBool() == true)
+    else if (settings.value("measure").toBool() == true && dataSeries != 0)
     {
         int nearest = 0;
         float distance = abs(pointToLocal(dataSeries->at(selectedArray)->at(0)).x()-event->x());;
