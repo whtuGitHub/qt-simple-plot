@@ -32,8 +32,8 @@ public:
     DataArray();
     ~DataArray();
 
-    void xMinMax(float& min, float& max);
-    void yMinMax(float& min, float& max, int from=-1, int to=-2);
+    void xMinMax(qreal& min, qreal& max);
+    void yMinMax(qreal& min, qreal& max, int from=-1, int to=-2);
 
     QColor color;
     QString name;

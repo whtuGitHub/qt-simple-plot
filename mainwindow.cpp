@@ -175,7 +175,7 @@ void MainWindow::updateMeasures()
         p1 = array->at(i1);
         p2 = array->at(i2);
 
-        float min, max;
+        qreal min, max;
         array->yMinMax(min, max, i1, i2);
 
         QString text("dy/dx:\n");
@@ -251,7 +251,7 @@ void MainWindow::save(QString savingFile)
     stream.writeTextElement("xLabel", xLabel);
     stream.writeTextElement("yLabel", yLabel);
 
-    float xMin, xMax, yMin, yMax;
+    qreal xMin, xMax, yMin, yMax;
     area.getView(xMin, xMax, yMin, yMax);
     stream.writeTextElement("xMin", QString::number(xMin));
     stream.writeTextElement("xMax", QString::number(xMax));
@@ -315,15 +315,15 @@ bool MainWindow::restore(QString savedFile)
         ui->xAxisLabel->setText(xLabel);
         ui->yAxisLabel->setText(yLabel);
 
-        float xMin, xMax, yMin, yMax;
+        qreal xMin, xMax, yMin, yMax;
         reader.readNextStartElement();
-        xMin = reader.readElementText().toFloat();
+        xMin = reader.readElementText().toDouble();
         reader.readNextStartElement();
-        xMax = reader.readElementText().toFloat();
+        xMax = reader.readElementText().toDouble();
         reader.readNextStartElement();
-        yMin = reader.readElementText().toFloat();
+        yMin = reader.readElementText().toDouble();
         reader.readNextStartElement();
-        yMax = reader.readElementText().toFloat();
+        yMax = reader.readElementText().toDouble();
 
         area.defineView(xMin, xMax, yMin, yMax);
 

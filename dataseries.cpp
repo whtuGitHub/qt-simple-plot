@@ -46,7 +46,7 @@ int DataSeries::loadFromFile(QString filename)
         {
             DataArray* newDataArray = new DataArray();
             this->append(newDataArray);
-            newDataArray->append(QPointF(line[i].toFloat(), line[i+1].toFloat()));
+            newDataArray->append(QPointF(line[i].toDouble(), line[i+1].toDouble()));
 
             newDataArray->name = QString("Series ").append(QString().setNum(i/2));
         }
@@ -57,7 +57,7 @@ int DataSeries::loadFromFile(QString filename)
             for (int i=0; i<size(); i++)
             {
                 if (2*i+1 < line.size())
-                    at(i)->append(QPointF(line[2*i].toFloat(), line[2*i+1].toFloat()));
+                    at(i)->append(QPointF(line[2*i].toDouble(), line[2*i+1].toDouble()));
             }
         }
 
@@ -66,11 +66,11 @@ int DataSeries::loadFromFile(QString filename)
     return 1;
 }
 
-void DataSeries::xMinMax(float& min, float& max)
+void DataSeries::xMinMax(qreal& min, qreal& max)
 {
     at(0)->xMinMax(min, max);
 
-    float tmpMin, tmpMax;
+    qreal tmpMin, tmpMax;
 
     for (int i=1; i<size(); i++)
     {
@@ -81,11 +81,11 @@ void DataSeries::xMinMax(float& min, float& max)
     }
 }
 
-void DataSeries::yMinMax(float& min, float& max)
+void DataSeries::yMinMax(qreal& min, qreal& max)
 {
     at(0)->yMinMax(min, max);
 
-    float tmpMin, tmpMax;
+    qreal tmpMin, tmpMax;
 
     for (int i=1; i<size(); i++)
     {

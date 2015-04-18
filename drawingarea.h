@@ -36,8 +36,8 @@ public:
     void setDataSeries(DataSeries* series);
     void setActiveSeries(int index);
     void setSelectedPoint(int index);
-    void defineView(float xMin, float xMax, float yMin, float yMax);
-    void getView(float& xMin, float& xMax, float& yMin, float& yMax);
+    void defineView(qreal xMin, qreal xMax, qreal yMin, qreal yMax);
+    void getView(qreal& xMin, qreal& xMax, qreal& yMin, qreal& yMax);
     void renderView(QPainter &painter);
 
 protected:
@@ -47,8 +47,8 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event);
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
 
-    void calcAxis(float min, float max, float& intMin, float& intMax,
-                  float& delta, float& subMin, float& subMax, float& subDelta);
+    void calcAxis(qreal min, qreal max, qreal& intMin, qreal& intMax,
+                  qreal& delta, qreal& subMin, qreal& subMax, qreal& subDelta);
 
     QPointF pointToLocal(QPointF point);
     QPointF localToPoint(QPointF local);
@@ -59,7 +59,7 @@ signals:
 private:
     DataSeries* dataSeries;
     int selectedPoint, selectedArray;
-    float xMin, xMax, yMin, yMax;
+    qreal xMin, xMax, yMin, yMax;
     int reservedHeight, reservedWidth;
     QPointF lastPosition;
     QSettings settings;

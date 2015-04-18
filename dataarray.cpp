@@ -32,7 +32,7 @@ DataArray::~DataArray()
 
 }
 
-void DataArray::xMinMax(float& min, float& max)
+void DataArray::xMinMax(qreal& min, qreal& max)
 {
     min = max = at(0).x();
 
@@ -43,7 +43,7 @@ void DataArray::xMinMax(float& min, float& max)
     }
 }
 
-void DataArray::yMinMax(float& min, float& max, int from, int to)
+void DataArray::yMinMax(qreal& min, qreal& max, int from, int to)
 {
     to++;
 

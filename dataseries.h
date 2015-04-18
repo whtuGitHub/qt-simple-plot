@@ -31,8 +31,8 @@ public:
 
     int loadFromFile(QString filename);
 
-    void xMinMax(float& min, float& max);
-    void yMinMax(float& min, float& max);
+    void xMinMax(qreal& min, qreal& max);
+    void yMinMax(qreal& min, qreal& max);
 
 signals:
 

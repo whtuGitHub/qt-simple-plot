@@ -57,7 +57,7 @@ void DrawingArea::setSelectedPoint(int index)
     selectedPoint = index;
 }
 
-void DrawingArea::defineView(float xMin, float xMax, float yMin, float yMax)
+void DrawingArea::defineView(qreal xMin, qreal xMax, qreal yMin, qreal yMax)
 {
     if (xMax > xMin)
     {
@@ -71,7 +71,7 @@ void DrawingArea::defineView(float xMin, float xMax, float yMin, float yMax)
     }
 }
 
-void DrawingArea::getView(float &xMin, float &xMax, float &yMin, float &yMax)
+void DrawingArea::getView(qreal &xMin, qreal &xMax, qreal &yMin, qreal &yMax)
 {
     xMin = this->xMin;
     xMax = this->xMax;
@@ -93,21 +93,21 @@ void DrawingArea::paintEvent(QPaintEvent *event)
 
 void DrawingArea::wheelEvent(QWheelEvent *event)
 {
-    float zoom;
+    qreal zoom;
     if (event->angleDelta().y() < 0)
         zoom = 1.1;
     else zoom = 1/1.1;
 
     if (settings.value("zoomX", true).toBool() == true)
     {
-        float xf = localToPoint(event->posF()).x();
+        qreal xf = localToPoint(event->posF()).x();
         xMin = xf-(xf-xMin)*zoom;
         xMax = xf-(xf-xMax)*zoom;
     }
 
     if (settings.value("zoomY", true).toBool() == true)
     {
-        float yf = localToPoint(event->posF()).y();
+        qreal yf = localToPoint(event->posF()).y();
         yMin = yf-(yf-yMin)*zoom;
         yMax = yf-(yf-yMax)*zoom;
     }
@@ -151,11 +151,11 @@ void DrawingArea::mouseMoveEvent(QMouseEvent * event)
     else if (settings.value("measure").toBool() == true && dataSeries != 0)
     {
         int nearest = 0;
-        float distance = abs(pointToLocal(dataSeries->at(selectedArray)->at(0)).x()-event->x());;
+        qreal distance = abs(pointToLocal(dataSeries->at(selectedArray)->at(0)).x()-event->x());;
 
         for (int i=1; i<dataSeries->at(selectedArray)->size(); i++)
         {
-            float d = abs(pointToLocal(dataSeries->at(selectedArray)->at(i)).x()-event->x());
+            qreal d = abs(pointToLocal(dataSeries->at(selectedArray)->at(i)).x()-event->x());
             if (d < distance)
             {
                 distance = d;
@@ -256,10 +256,10 @@ void DrawingArea::renderView(QPainter &painter)
     painter.fillRect(0, 0, reservedWidth, height(), QColor(255,255,255));
     painter.fillRect(0, height()-reservedHeight, width(), height(), QColor(255,255,255));
 
-    float min, max, delta, subMin, subMax, subDelta;
+    qreal min, max, delta, subMin, subMax, subDelta;
     calcAxis(xMin, xMax, min, max, delta, subMin, subMax, subDelta);
 
-    for (float x=min; x<=max; x+=delta)
+    for (qreal x=min; x<=max; x+=delta)
     {
         path = QPainterPath();
         QPointF p = pointToLocal(QPointF(x, 0));
@@ -274,7 +274,7 @@ void DrawingArea::renderView(QPainter &painter)
 
     if (subDelta != delta)
     {
-        for (float x=subMin; x<=subMax; x+=subDelta)
+        for (qreal x=subMin; x<=subMax; x+=subDelta)
         {
             path = QPainterPath();
             QPointF p = pointToLocal(QPointF(x, 0));
@@ -288,7 +288,7 @@ void DrawingArea::renderView(QPainter &painter)
 
     calcAxis(yMin, yMax, min, max, delta, subMin, subMax, subDelta);
 
-    for (float y=min; y<=max; y+=delta)
+    for (qreal y=min; y<=max; y+=delta)
     {
         path = QPainterPath();
         QPointF p = pointToLocal(QPointF(0, y));
@@ -303,7 +303,7 @@ void DrawingArea::renderView(QPainter &painter)
 
     if (subDelta != delta)
     {
-        for (float y=subMin; y<=subMax; y+=subDelta)
+        for (qreal y=subMin; y<=subMax; y+=subDelta)
         {
             path = QPainterPath();
             QPointF p = pointToLocal(QPointF(0, y));
@@ -326,8 +326,8 @@ void DrawingArea::renderView(QPainter &painter)
     painter.strokePath(path, pen);
 }
 
-void DrawingArea::calcAxis(float min, float max, float &intMin,
-    float &intMax, float &delta, float &subMin, float &subMax, float &subDelta)
+void DrawingArea::calcAxis(qreal min, qreal max, qreal &intMin,
+    qreal &intMax, qreal &delta, qreal &subMin, qreal &subMax, qreal &subDelta)
 {
     intMin = subMin = floor(min);
     intMax = subMax = ceil(max);
@@ -341,7 +341,7 @@ void DrawingArea::calcAxis(float min, float max, float &intMin,
         {
             subDelta = delta/10;
 
-            for (float x=intMin; x <= intMax; x += subDelta)
+            for (qreal x=intMin; x <= intMax; x += subDelta)
             {
                 if (x+subDelta > min && x < min)
                     subMin = x;
@@ -371,7 +371,7 @@ void DrawingArea::calcAxis(float min, float max, float &intMin,
 
         for (int i=1; n > 12; i++)
         {
-            float f = pow(10.0, i);
+            qreal f = pow(10.0, i);
             intMin = floor(min/f)*f;
             intMax = ceil(max/f)*f;
             delta = delta*10;
