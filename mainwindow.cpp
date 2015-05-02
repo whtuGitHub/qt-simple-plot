@@ -20,12 +20,21 @@
 #include "ui_mainwindow.h"
 #include <QXmlStreamWriter>
 #include <QtSvg/QSvgGenerator>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    xLabel = "x axis";
+    yLabel = "y axis";
+
+    area.setXAxisLabel(xLabel);
+    area.setYAxisLabel(yLabel);
 
     if (qApp->arguments().size() > 1)
     {
@@ -50,8 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     resize(1024,500);
 
-    xLabel = "x axis";
-    yLabel = "y axis";
+    exporting = false;
 }
 
 MainWindow::~MainWindow()
@@ -231,8 +239,8 @@ void MainWindow::on_plotConfigureDialogAccepted()
 {
     xLabel = plotConfigureDialog.xLabel();
     yLabel = plotConfigureDialog.yLabel();
-    ui->xAxisLabel->setText(xLabel);
-    ui->yAxisLabel->setText(yLabel);
+    area.setXAxisLabel(xLabel);
+    area.setYAxisLabel(yLabel);
 }
 
 void MainWindow::save(QString savingFile)
@@ -240,47 +248,43 @@ void MainWindow::save(QString savingFile)
     QFile file(savingFile);
     file.open(QFile::WriteOnly);
 
-    QXmlStreamWriter stream(&file);
-    stream.setAutoFormatting(true);
-    stream.writeStartDocument();
+    QJsonObject mainObject;
 
-    stream.writeStartElement("qtSimplePlot");
-    stream.writeAttribute("version", "1.0");
+    mainObject["version"] = "1.0";
 
-    stream.writeTextElement("inputFile", inputFile);
-    stream.writeTextElement("xLabel", xLabel);
-    stream.writeTextElement("yLabel", yLabel);
+    mainObject["inputFile"] = inputFile;
+    mainObject["xLabel"] = xLabel;
+    mainObject["yLabel"] = yLabel;
 
     qreal xMin, xMax, yMin, yMax;
     area.getView(xMin, xMax, yMin, yMax);
-    stream.writeTextElement("xMin", QString::number(xMin));
-    stream.writeTextElement("xMax", QString::number(xMax));
-    stream.writeTextElement("yMin", QString::number(yMin));
-    stream.writeTextElement("yMax", QString::number(yMax));
+    mainObject["xMin"] = xMin;
+    mainObject["xMax"] = xMax;
+    mainObject["yMin"] = yMin;
+    mainObject["yMax"] = yMax;
 
-    stream.writeStartElement("dataSeries");
+    QJsonArray series;
+
     for (int i=0; i<dataSeries.size(); i++)
     {
-        stream.writeStartElement("array");
-        stream.writeAttribute("index", QString::number(i));
-        stream.writeTextElement("name", dataSeries[i]->name);
-        stream.writeTextElement("red", QString::number(dataSeries[i]->color.red()));
-        stream.writeTextElement("green", QString::number(dataSeries[i]->color.green()));
-        stream.writeTextElement("blue", QString::number(dataSeries[i]->color.blue()));
+        QJsonObject dataArray;
+        dataArray["index"] = i;
+        dataArray["name"] = dataSeries[i]->name;
+        dataArray["color"] = dataSeries[i]->color.name();
 
-        stream.writeStartElement("selectedPoints");
+        QJsonArray selectedPoints;
         for (int j=0; j<dataSeries[i]->selectedPoints.rowCount(); j++)
         {
-            stream.writeTextElement("index", QString::number(dataSeries[i]->selectedPoints.item(j, 0)->data().toInt()));
+            selectedPoints.append(dataSeries[i]->selectedPoints.item(j, 0)->data().toInt());
         }
-        stream.writeEndElement();
-
-        stream.writeEndElement();
+        dataArray["selectedPoints"] = selectedPoints;
+        series.append(dataArray);
     }
-    stream.writeEndElement();
+    mainObject["dataSeries"] = series;
 
-    stream.writeEndElement();
-    stream.writeEndDocument();
+    QJsonDocument doc(mainObject);
+
+    file.write(doc.toJson());
 }
 
 bool MainWindow::restore(QString savedFile)
@@ -288,94 +292,65 @@ bool MainWindow::restore(QString savedFile)
     QFile file(savedFile);
     file.open(QFile::ReadOnly);
 
-    QXmlStreamReader reader(&file);
-    reader.readNextStartElement();
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
 
-    if (reader.name() == "qtSimplePlot" && reader.attributes().value("version") == "1.0")
+    if (doc.isNull()) return false;
+
+    QJsonObject mainObject = doc.object();
+
+    inputFile = mainObject["inputFile"].toString();
+    dataSeries.loadFromFile(inputFile);
+    area.setDataSeries(&dataSeries);
+    for (int i=0; i<dataSeries.size(); i++)
     {
-        reader.readNextStartElement();
-        inputFile = reader.readElementText();
-
-        dataSeries.loadFromFile(inputFile);
-        area.setDataSeries(&dataSeries);
-        for (int i=0; i<dataSeries.size(); i++)
-        {
-            QPixmap pixmap(20, 20);
-            pixmap.fill(dataSeries[i]->color);
-            QIcon icon(pixmap);
-            ui->seriesCombo->addItem(icon, dataSeries[i]->name, i);
-        }
-
-        reader.readNextStartElement();
-        xLabel = reader.readElementText();
-
-        reader.readNextStartElement();
-        yLabel = reader.readElementText();
-
-        ui->xAxisLabel->setText(xLabel);
-        ui->yAxisLabel->setText(yLabel);
-
-        qreal xMin, xMax, yMin, yMax;
-        reader.readNextStartElement();
-        xMin = reader.readElementText().toDouble();
-        reader.readNextStartElement();
-        xMax = reader.readElementText().toDouble();
-        reader.readNextStartElement();
-        yMin = reader.readElementText().toDouble();
-        reader.readNextStartElement();
-        yMax = reader.readElementText().toDouble();
-
-        area.defineView(xMin, xMax, yMin, yMax);
-
-        reader.readNextStartElement(); //dataSeries
-        reader.readNextStartElement(); //array
-
-        while (reader.name() == "array")
-        {
-            int i = reader.attributes().value("index").toInt();
-            if (i < dataSeries.size())
-            {
-                reader.readNextStartElement();
-                dataSeries[i]->name = reader.readElementText();
-
-                int r,g,b;
-                reader.readNextStartElement();
-                r = reader.readElementText().toInt();
-                reader.readNextStartElement();
-                g = reader.readElementText().toInt();
-                reader.readNextStartElement();
-                b = reader.readElementText().toInt();
-                dataSeries[i]->color = QColor(r,g,b);
-
-                QPixmap pixmap(20, 20);
-                pixmap.fill(dataSeries[i]->color);
-                QIcon icon(pixmap);
-                ui->seriesCombo->setItemText(i, dataSeries[i]->name);
-                ui->seriesCombo->setItemIcon(i, icon);
-
-                reader.readNextStartElement();
-                if (reader.name() == "selectedPoints")
-                {
-                    reader.readNextStartElement();
-                    while (reader.name() == "index")
-                    {
-                        on_measurePointAdded(i, reader.readElementText().toInt());
-                        reader.readNextStartElement();
-                    }
-                }
-
-                while (!(reader.name() == "array" && reader.tokenType() == QXmlStreamReader::StartElement) &&
-                       reader.name() != "qtSimplePlot")
-                {
-                    reader.readNext();
-                }
-
-            }
-        }
-        area.update();
-        return true;
+        QPixmap pixmap(20, 20);
+        pixmap.fill(dataSeries[i]->color);
+        QIcon icon(pixmap);
+        ui->seriesCombo->addItem(icon, dataSeries[i]->name, i);
     }
-    return false;
+
+    xLabel = mainObject["xLabel"].toString();
+    yLabel = mainObject["yLabel"].toString();
+    area.setXAxisLabel(xLabel);
+    area.setYAxisLabel(yLabel);
+
+    qreal xMin, xMax, yMin, yMax;
+
+    xMin = mainObject["xMin"].toDouble();
+    xMax = mainObject["xMax"].toDouble();
+    yMin = mainObject["yMin"].toDouble();
+    yMax = mainObject["yMax"].toDouble();
+
+    area.defineView(xMin, xMax, yMin, yMax);
+
+    QJsonArray series = mainObject["dataSeries"].toArray();
+    for (int i=0; i<series.size(); i++)
+    {
+        QJsonObject dataArray = series[i].toObject();
+        int index = dataArray["index"].toInt();
+        if (index < dataSeries.size())
+        {
+            dataSeries[index]->name = dataArray["name"].toString();
+            QColor color(dataArray["color"].toString());
+            dataSeries[index]->color = color;
+
+            QPixmap pixmap(20, 20);
+            pixmap.fill(color);
+            QIcon icon(pixmap);
+            ui->seriesCombo->setItemText(index, dataSeries[index]->name);
+            ui->seriesCombo->setItemIcon(index, icon);
+
+            QJsonArray selectedPoints = dataArray["selectedPoints"].toArray();
+            for (int j=0; j<selectedPoints.size(); j++)
+            {
+                on_measurePointAdded(index, selectedPoints[j].toInt());
+            }
+            dataArray["selectedPoints"] = selectedPoints;
+        }
+    }
+
+    area.update();
+    return true;
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -383,7 +358,7 @@ void MainWindow::on_actionOpen_triggered()
     fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
     QStringList filters;
     filters << "Text files (*.txt *.data *)"
-            << "QPS files (*.qps)";
+            << "QSP files (*.qsp)";
 
     fileDialog.setNameFilters(filters);
     fileDialog.show();
@@ -393,8 +368,9 @@ void MainWindow::on_actionSave_triggered()
 {
     if (savedFile.length() == 0)
     {
+        exporting = false;
         fileDialog.setAcceptMode(QFileDialog::AcceptSave);
-        fileDialog.setNameFilter("QPS files (*.qps)");
+        fileDialog.setNameFilter("QSP files (*.qsp)");
         fileDialog.show();
     }
     else
@@ -415,9 +391,11 @@ void MainWindow::on_fileDialogAccepted(QString fileName)
             QSvgGenerator gen;
             gen.setFileName(fileName);
             gen.setSize(area.size());
+            gen.setViewBox(QRect(0, 0, area.width(), area.height()));
 
             QPainter painter;
             painter.begin(&gen);
+            painter.setFont(QFont(area.fontInfo().family(), area.fontInfo().pixelSize()));
             area.renderView(painter);
 
             exporting = false;

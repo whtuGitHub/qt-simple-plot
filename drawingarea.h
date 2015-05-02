@@ -36,9 +36,14 @@ public:
     void setDataSeries(DataSeries* series);
     void setActiveSeries(int index);
     void setSelectedPoint(int index);
+    void setXAxisLabel(QString label);
+    void setYAxisLabel(QString label);
+
     void defineView(qreal xMin, qreal xMax, qreal yMin, qreal yMax);
     void getView(qreal& xMin, qreal& xMax, qreal& yMin, qreal& yMax);
     void renderView(QPainter &painter);
+
+
 
 protected:
     void wheelEvent(QWheelEvent* event);
@@ -60,6 +65,7 @@ private:
     DataSeries* dataSeries;
     int selectedPoint, selectedArray;
     qreal xMin, xMax, yMin, yMax;
+    QString xLabel, yLabel;
     int reservedHeight, reservedWidth;
     QPointF lastPosition;
     QSettings settings;

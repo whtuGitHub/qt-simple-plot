@@ -18,12 +18,16 @@
 
 #include "drawingarea.h"
 #include <cmath>
+#include <QStaticText>
 
 DrawingArea::DrawingArea(QWidget *parent) : QWidget(parent)
 {
     dataSeries = 0;
     reservedHeight = 40;
-    reservedWidth = 50;
+    reservedWidth = 70;
+
+    xLabel = "x axis";
+    yLabel = "y axis";
 
     selectedPoint = -1;
     selectedArray = -1;
@@ -55,6 +59,22 @@ void DrawingArea::setActiveSeries(int index)
 void DrawingArea::setSelectedPoint(int index)
 {
     selectedPoint = index;
+}
+
+void DrawingArea::setXAxisLabel(QString label)
+{
+    xLabel = label;
+    QFontMetrics fm(QFont(fontInfo().family(), fontInfo().pixelSize()));
+    reservedHeight = QStaticText(xLabel).size().height()*3;
+    update();
+}
+
+void DrawingArea::setYAxisLabel(QString label)
+{
+    yLabel = label;
+    QFontMetrics fm(QFont(fontInfo().family(), fontInfo().pixelSize()));
+    reservedWidth = QStaticText(yLabel).size().width()+70;
+    update();
 }
 
 void DrawingArea::defineView(qreal xMin, qreal xMax, qreal yMin, qreal yMax)
@@ -268,7 +288,7 @@ void DrawingArea::renderView(QPainter &painter)
         p.setY(height()-reservedHeight);
         path.lineTo(p);
         painter.strokePath(path, pen);
-        p.setY(height()-20);
+        p.setY(height()-reservedHeight+25);
         painter.drawText(p, QString::number(x));
     }
 
@@ -297,7 +317,7 @@ void DrawingArea::renderView(QPainter &painter)
         p.setX(reservedWidth);
         path.lineTo(p);
         painter.strokePath(path, pen);
-        p.setX(0);
+        p.setX(reservedWidth-60);
         painter.drawText(p, QString::number(y));
     }
 
@@ -324,6 +344,10 @@ void DrawingArea::renderView(QPainter &painter)
     path.moveTo(reservedWidth, 1);
     path.lineTo(reservedWidth, height()-reservedHeight);
     painter.strokePath(path, pen);
+
+    //axes labels
+    painter.drawStaticText(0, height()/2, QStaticText(yLabel));
+    painter.drawStaticText(width()/2, height()-20, QStaticText(xLabel));
 }
 
 void DrawingArea::calcAxis(qreal min, qreal max, qreal &intMin,
@@ -333,11 +357,11 @@ void DrawingArea::calcAxis(qreal min, qreal max, qreal &intMin,
     intMax = subMax = ceil(max);
     delta = subDelta = 1.0;
 
-    int n = (intMax-intMin)/delta;
+    qreal n = (intMax-intMin)/delta;
 
-    if (n < 6)
+    if (n < 6.)
     {
-        while (n < 6)
+        while (n < 6.)
         {
             subDelta = delta/10;
 
@@ -354,7 +378,7 @@ void DrawingArea::calcAxis(qreal min, qreal max, qreal &intMin,
 
             n = (subMax-subMin)/subDelta;
 
-            if (n < 10)
+            if (n < 10.)
             {
                 delta = subDelta;
                 intMin = subMin;
@@ -363,13 +387,13 @@ void DrawingArea::calcAxis(qreal min, qreal max, qreal &intMin,
         }
     }
 
-    else if (n > 12)
+    else if (n > 12.)
     {
         subMin = intMin;
         subMax = intMax;
         subDelta = delta;
 
-        for (int i=1; n > 12; i++)
+        for (int i=1; n > 12.; i++)
         {
             qreal f = pow(10.0, i);
             intMin = floor(min/f)*f;
@@ -378,7 +402,7 @@ void DrawingArea::calcAxis(qreal min, qreal max, qreal &intMin,
 
             n = (intMax-intMin)/delta;
 
-            if (n > 12)
+            if (n > 12.)
             {
                 subMin = intMin;
                 subMax = intMax;
