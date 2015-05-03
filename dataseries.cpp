@@ -51,13 +51,28 @@ int DataSeries::loadFromFile(QString filename)
             newDataArray->name = QString("Series ").append(QString().setNum(i/2));
         }
 
+        int index = 0;
         while (!file.atEnd())
         {
             QStringList line = QString(file.readLine()).split(" ", QString::SkipEmptyParts);
+
             for (int i=0; i<size(); i++)
             {
+                int arrayIndex = 0;
+                if (index != 0) arrayIndex = index;
+                else arrayIndex = i;
                 if (2*i+1 < line.size())
-                    at(i)->append(QPointF(line[2*i].toDouble(), line[2*i+1].toDouble()));
+                {
+                    if (line[2*i].toDouble() < at(arrayIndex)->last().x())
+                    {
+                        index += 1;
+                        DataArray* newDataArray = new DataArray();
+                        newDataArray->name = QString("Series ").append(QString().setNum(index));
+                        this->append(newDataArray);
+                        arrayIndex = index;
+                    }
+                    at(arrayIndex)->append(QPointF(line[2*i].toDouble(), line[2*i+1].toDouble()));
+                }
             }
         }
 
