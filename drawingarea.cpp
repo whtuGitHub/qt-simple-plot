@@ -64,16 +64,18 @@ void DrawingArea::setSelectedPoint(int index)
 void DrawingArea::setXAxisLabel(QString label)
 {
     xLabel = label;
-    QFontMetrics fm(QFont(fontInfo().family(), fontInfo().pixelSize()));
-    reservedHeight = QStaticText(xLabel).size().height()*3;
+    QStaticText st = QStaticText(xLabel);
+    st.prepare(QTransform(), QFont(fontInfo().family(), fontInfo().pixelSize()));
+    reservedHeight = st.size().height()*3;
     update();
 }
 
 void DrawingArea::setYAxisLabel(QString label)
 {
     yLabel = label;
-    QFontMetrics fm(QFont(fontInfo().family(), fontInfo().pixelSize()));
-    reservedWidth = QStaticText(yLabel).size().width()+70;
+    QStaticText st = QStaticText(yLabel);
+    st.prepare(QTransform(), QFont(fontInfo().family(), fontInfo().pixelSize()));
+    reservedWidth = st.size().width()+70;
     update();
 }
 
@@ -351,7 +353,7 @@ void DrawingArea::renderView(QPainter &painter)
 }
 
 void DrawingArea::calcAxis(qreal min, qreal max, qreal &intMin,
-    qreal &intMax, qreal &delta, qreal &subMin, qreal &subMax, qreal &subDelta)
+                           qreal &intMax, qreal &delta, qreal &subMin, qreal &subMax, qreal &subDelta)
 {
     intMin = subMin = floor(min);
     intMax = subMax = ceil(max);
@@ -425,11 +427,11 @@ void DrawingArea::calcAxis(qreal min, qreal max, qreal &intMin,
 QPointF DrawingArea::pointToLocal(QPointF point)
 {
     return QPointF(reservedWidth+(point.x()-xMin)/(xMax-xMin)*(width()-reservedWidth),
-            (yMax-point.y())/(yMax-yMin)*(height()-reservedHeight));
+                   (yMax-point.y())/(yMax-yMin)*(height()-reservedHeight));
 }
 
 QPointF DrawingArea::localToPoint(QPointF local)
 {
     return QPointF(1.*(local.x()-reservedWidth)/(width()-reservedWidth)*(xMax-xMin)+xMin,
-    yMax - 1.*local.y()/(height()-reservedHeight)*(yMax-yMin));
+                   yMax - 1.*local.y()/(height()-reservedHeight)*(yMax-yMin));
 }

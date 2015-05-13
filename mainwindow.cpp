@@ -25,14 +25,88 @@
 #include <QJsonArray>
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    QMainWindow(parent)
 {
-    ui->setupUi(this);
+    //setup ui
+
+    setCentralWidget(new QWidget(this));
+    centralWidget()->setLayout(&gridLayout);
+    gridLayout.addWidget(&toolbar, 0, 0, 1, 3);
+    gridLayout.addWidget(&area, 1, 0, 4, 1);
+    gridLayout.addWidget(&seriesCombo, 1, 1, 1, 1);
+    gridLayout.addWidget(&selectedPoints, 3, 1, 1, 2);
+    gridLayout.addWidget(&measures, 4, 1, 1, 2);
+
+    toolbar.setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    measures.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    area.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    QPushButton* button = new QPushButton(QIcon::fromTheme("configure"), "Configure", this);
+    connect(button, SIGNAL(clicked(bool)), this, SLOT(on_configureButton_clicked()));
+    gridLayout.addWidget(button, 1, 2, 1, 1);
+
+    button = new QPushButton(QIcon::fromTheme("edit-delete"), "Delete", this);
+    connect(button, SIGNAL(clicked(bool)), this, SLOT(on_deleteButton_clicked()));
+    gridLayout.addWidget(button, 2, 2, 1, 1);
+
+    //toolbar actions
+    QAction* action = new QAction(QIcon::fromTheme("zoom-in-x"), "Zoom X", this);
+    action->setCheckable(true);
+    action->setChecked(settings.value("zoomX", true).toBool());
+    connect(action, SIGNAL(toggled(bool)), this, SLOT(on_actionX_zoom_toggled(bool)));
+    toolbar.addAction(action);
+
+    action = new QAction(QIcon::fromTheme("zoom-in-y"), "Zoom Y", this);
+    action->setCheckable(true);
+    action->setChecked(settings.value("zoomY", true).toBool());
+    connect(action, SIGNAL(toggled(bool)), this, SLOT(on_actionY_zoom_toggled(bool)));
+    toolbar.addAction(action);
+
+    panAction = new QAction(QIcon::fromTheme("transform-move"), "Pan", this);
+    panAction->setCheckable(true);
+    panAction->setChecked(settings.value("pan", true).toBool());
+    connect(panAction, SIGNAL(toggled(bool)), this, SLOT(on_actionPan_toggled(bool)));
+    toolbar.addAction(panAction);
+
+    measureAction = new QAction(QIcon::fromTheme("measure"), "Measure", this);
+    measureAction->setCheckable(true);
+    measureAction->setChecked(settings.value("measure", true).toBool());
+    on_actionMeasure_toggled(measureAction->isChecked());
+    connect(measureAction, SIGNAL(toggled(bool)), this, SLOT(on_actionMeasure_toggled(bool)));
+    toolbar.addAction(measureAction);
+
+    toolbar.addSeparator();
+
+    action = new QAction(QIcon::fromTheme("configure"), "Configure", this);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(on_actionConfigure_triggered()));
+    toolbar.addAction(action);
+
+    toolbar.addSeparator();
+
+    action = new QAction(QIcon::fromTheme("document-open"), "Open", this);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(on_actionOpen_triggered()));
+    toolbar.addAction(action);
+
+    action = new QAction(QIcon::fromTheme("document-save"), "Save", this);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(on_actionSave_triggered()));
+    toolbar.addAction(action);
+
+    action = new QAction(QIcon::fromTheme("document-export"), "Export", this);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(on_actionExport_triggered()));
+    toolbar.addAction(action);
+
+    connect(&area, SIGNAL(measurePointAdded(int,int)), this, SLOT(on_measurePointAdded(int,int)));
+    connect(&configDialog, SIGNAL(accepted()), this, SLOT(on_configDialogAccepted()));
+    connect(&plotConfigureDialog, SIGNAL(accepted()),
+            this, SLOT(on_plotConfigureDialogAccepted()));
+    connect(&fileDialog, SIGNAL(fileSelected(QString)), this, SLOT(on_fileDialogAccepted(QString)));
+    connect(&seriesCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(on_seriesCombo_currentIndexChanged(int)));
+    //ui completed
 
     xLabel = "x axis";
     yLabel = "y axis";
 
+    //area.setFont(QFont("sans", 16));
     area.setXAxisLabel(xLabel);
     area.setYAxisLabel(yLabel);
 
@@ -43,20 +117,6 @@ MainWindow::MainWindow(QWidget *parent) :
     else
         area.setDataSeries(0);
 
-    connect(&area, SIGNAL(measurePointAdded(int,int)), this, SLOT(on_measurePointAdded(int,int)));
-    connect(&configDialog, SIGNAL(accepted()), this, SLOT(on_configDialogAccepted()));
-    connect(&plotConfigureDialog, SIGNAL(accepted()),
-            this, SLOT(on_plotConfigureDialogAccepted()));
-    connect(&fileDialog, SIGNAL(fileSelected(QString)), this, SLOT(on_fileDialogAccepted(QString)));
-
-    ui->gridLayout->replaceWidget(ui->placeHolder, &area);
-    area.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    ui->actionX_zoom->setChecked(settings.value("zoomX", true).toBool());
-    ui->actionY_zoom->setChecked(settings.value("zoomY", true).toBool());
-    ui->actionPan->setChecked(settings.value("pan", true).toBool());
-    ui->actionMeasure->setChecked(settings.value("measure", false).toBool());
-
     resize(1024,500);
 
     exporting = false;
@@ -64,13 +124,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    //delete ui;
 }
 
 void MainWindow::loadFile(QString fileName)
 {
-    while (ui->seriesCombo->count())
-        ui->seriesCombo->removeItem(0);
+    while (seriesCombo.count())
+        seriesCombo.removeItem(0);
 
     savedFile = fileName;
     if (!restore(fileName))
@@ -84,7 +144,7 @@ void MainWindow::loadFile(QString fileName)
             QPixmap pixmap(20, 20);
             pixmap.fill(dataSeries[i]->color);
             QIcon icon(pixmap);
-            ui->seriesCombo->addItem(icon, dataSeries[i]->name, i);
+            seriesCombo.addItem(icon, dataSeries[i]->name, i);
         }
         area.setDataSeries(&dataSeries);
     }
@@ -118,7 +178,7 @@ void MainWindow::on_actionPan_toggled(bool toggled)
 {
     if (toggled)
     {
-        ui->actionMeasure->setChecked(false);
+        measureAction->setChecked(false);
         area.setSelectedPoint(-1);
         area.update();
     }
@@ -130,11 +190,11 @@ void MainWindow::on_actionPan_toggled(bool toggled)
 void MainWindow::on_actionMeasure_toggled(bool toggled)
 {
     if (toggled)
-        ui->actionPan->setChecked(false);
+        panAction->setChecked(false);
     settings.setValue("measure", toggled);
 
     area.setMouseTracking(toggled);
-    area.setActiveSeries(ui->seriesCombo->currentIndex());
+    area.setActiveSeries(seriesCombo.currentIndex());
 
     area.setCursor(QCursor(Qt::ArrowCursor));
 }
@@ -144,9 +204,9 @@ void MainWindow::on_seriesCombo_currentIndexChanged(int index)
     if (index > -1)
     {
         area.setActiveSeries(index);
-        ui->selectedPoints->setModel(&dataSeries[index]->selectedPoints);
+        selectedPoints.setModel(&dataSeries[index]->selectedPoints);
 
-        connect(ui->selectedPoints->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+        connect(selectedPoints.selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
                 this, SLOT(on_selectedPointsActivated(QModelIndex,QModelIndex)));
 
         updateMeasures();
@@ -155,9 +215,9 @@ void MainWindow::on_seriesCombo_currentIndexChanged(int index)
 
 void MainWindow::on_deleteButton_clicked()
 {
-    foreach (QModelIndex index, ui->selectedPoints->selectionModel()->selectedIndexes())
+    foreach (QModelIndex index, selectedPoints.selectionModel()->selectedIndexes())
     {
-        ui->selectedPoints->model()->removeRow(index.row());
+        selectedPoints.model()->removeRow(index.row());
     }
     updateMeasures();
     area.setSelectedPoint(-1);
@@ -166,9 +226,9 @@ void MainWindow::on_deleteButton_clicked()
 
 void MainWindow::updateMeasures()
 {
-    if (dataSeries[ui->seriesCombo->currentIndex()]->selectedPoints.rowCount() == 2)
+    if (dataSeries[seriesCombo.currentIndex()]->selectedPoints.rowCount() == 2)
     {
-        DataArray* array = dataSeries[ui->seriesCombo->currentIndex()];
+        DataArray* array = dataSeries[seriesCombo.currentIndex()];
         QPointF p1, p2;
         int i1 = array->selectedPoints.item(0,0)->data().toInt(),
                 i2 = array->selectedPoints.item(1,0)->data().toInt();
@@ -191,15 +251,15 @@ void MainWindow::updateMeasures()
         text += QString("\nMin:\n") += QString::number(min);
         text += QString("\nMax:\n") += QString::number(max);
         text += QString("\nPeak to peak:\n") += QString::number(max-min);
-        ui->measures->setText(text);
+        measures.setText(text);
     }
     else
-        ui->measures->setText("");
+        measures.setText("");
 }
 
 void MainWindow::on_configureButton_clicked()
 {
-    DataArray* array = dataSeries[ui->seriesCombo->currentIndex()];
+    DataArray* array = dataSeries[seriesCombo.currentIndex()];
     configDialog.setColor(array->color);
     configDialog.setName(array->name);
     configDialog.show();
@@ -207,25 +267,28 @@ void MainWindow::on_configureButton_clicked()
 
 void MainWindow::on_configDialogAccepted()
 {
-    int index = ui->seriesCombo->currentIndex();
+    int index = seriesCombo.currentIndex();
     DataArray* array = dataSeries[index];
 
     array->name = configDialog.name();
     array->color = configDialog.color();
 
-    ui->seriesCombo->setItemText(index, array->name);
+    seriesCombo.setItemText(index, array->name);
 
     QPixmap pixmap(20, 20);
     pixmap.fill(array->color);
     QIcon icon(pixmap);
-    ui->seriesCombo->setItemIcon(index, icon);
+    seriesCombo.setItemIcon(index, icon);
 }
 
 void MainWindow::on_selectedPointsActivated(QModelIndex index, QModelIndex previous)
 {
-    DataArray* array = dataSeries[ui->seriesCombo->currentIndex()];
-    area.setSelectedPoint(array->selectedPoints.item(index.row(), 0)->data().toInt());
-    area.update();
+    if (index.row() > -1) {
+        DataArray* array = dataSeries[seriesCombo.currentIndex()];
+        area.setSelectedPoint(array->selectedPoints.item(index.row(), 0)->data().toInt());
+        int a = array->selectedPoints.item(index.row(), 0)->data().toInt();
+        area.update();
+    }
 }
 
 void MainWindow::on_actionConfigure_triggered()
@@ -306,7 +369,7 @@ bool MainWindow::restore(QString savedFile)
         QPixmap pixmap(20, 20);
         pixmap.fill(dataSeries[i]->color);
         QIcon icon(pixmap);
-        ui->seriesCombo->addItem(icon, dataSeries[i]->name, i);
+        seriesCombo.addItem(icon, dataSeries[i]->name, i);
     }
 
     xLabel = mainObject["xLabel"].toString();
@@ -337,8 +400,8 @@ bool MainWindow::restore(QString savedFile)
             QPixmap pixmap(20, 20);
             pixmap.fill(color);
             QIcon icon(pixmap);
-            ui->seriesCombo->setItemText(index, dataSeries[index]->name);
-            ui->seriesCombo->setItemIcon(index, icon);
+            seriesCombo.setItemText(index, dataSeries[index]->name);
+            seriesCombo.setItemIcon(index, icon);
 
             QJsonArray selectedPoints = dataArray["selectedPoints"].toArray();
             for (int j=0; j<selectedPoints.size(); j++)
@@ -351,6 +414,88 @@ bool MainWindow::restore(QString savedFile)
 
     area.update();
     return true;
+}
+
+void MainWindow::exportToFile(QString fileName)
+{
+    QFont areaFont(area.fontInfo().family(), area.fontInfo().pixelSize());
+    QFontMetrics fm(areaFont);
+
+    int height = area.height();
+
+    foreach (DataArray* array, dataSeries) {
+        if (array->selectedPoints.rowCount() == 0)
+            height += fm.height() + 5;
+        if (array->selectedPoints.rowCount() == 1)
+            height += 2*(fm.height() + 5);
+        if (array->selectedPoints.rowCount() == 2)
+            height += 7*(fm.height() + 5);
+    }
+    height += 10;
+
+    QSvgGenerator gen;
+    gen.setFileName(fileName);
+    gen.setSize(QSize(area.width(), height));
+    gen.setViewBox(QRect(0, 0, area.width(), height));
+
+    QPainter painter;
+    painter.begin(&gen);
+    painter.setFont(areaFont);
+    area.renderView(painter);
+
+    height = area.height() + fm.height() + 5;
+
+    foreach (DataArray* array, dataSeries) {
+        painter.fillRect(10, height+2, 20, -20, array->color);
+        painter.drawText(40, height, array->name);
+        height += fm.height() + 5;
+
+        if (array->selectedPoints.rowCount() == 1)
+        {
+            QPointF p;
+            int i = array->selectedPoints.item(0,0)->data().toInt();
+
+            p = array->at(i);
+
+            QString text("Point 1: ");
+            text += QString::number(p.x()) + QString(", ") + QString::number(p.y());
+
+            painter.drawText(10, height, text);
+            height += fm.height() + 5;
+        }
+        else if (array->selectedPoints.rowCount() == 2)
+        {
+            QPointF p1, p2;
+            int i1 = array->selectedPoints.item(0,0)->data().toInt(),
+                    i2 = array->selectedPoints.item(1,0)->data().toInt();
+
+            if (i1 > i2)
+            {
+                int tmp = i1;
+                i1 = i2;
+                i2 = tmp;
+            }
+
+            p1 = array->at(i1);
+            p2 = array->at(i2);
+
+            qreal min, max;
+            array->yMinMax(min, max, i1, i2);
+
+            painter.drawText(10, height, QString("Point 1: ") + QString::number(p1.x()) + QString(", ") + QString::number(p1.y()));
+            height += fm.height() + 5;
+            painter.drawText(10, height, QString("Point 2: ") + QString::number(p2.x()) + QString(", ") + QString::number(p2.y()));
+            height += fm.height() + 5;
+            painter.drawText(10, height, QString("dy/dx: ") + QString::number((p2.y()-p1.y())/(p2.x()-p1.x())));
+            height += fm.height() + 5;
+            painter.drawText(10, height, QString("Min: ") + QString::number(min));
+            height += fm.height() + 5;
+            painter.drawText(10, height, QString("Max: ") + QString::number(max));
+            height += fm.height() + 5;
+            painter.drawText(10, height, QString("Peak to peak: ") + QString::number(max-min));
+            height += fm.height() + 5;
+        }
+    }
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -388,16 +533,7 @@ void MainWindow::on_fileDialogAccepted(QString fileName)
     {
         if (exporting)
         {
-            QSvgGenerator gen;
-            gen.setFileName(fileName);
-            gen.setSize(area.size());
-            gen.setViewBox(QRect(0, 0, area.width(), area.height()));
-
-            QPainter painter;
-            painter.begin(&gen);
-            painter.setFont(QFont(area.fontInfo().family(), area.fontInfo().pixelSize()));
-            area.renderView(painter);
-
+            exportToFile(fileName);
             exporting = false;
         }
         else

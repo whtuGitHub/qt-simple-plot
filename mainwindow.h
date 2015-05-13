@@ -21,14 +21,15 @@
 
 #include <QApplication>
 #include <QMainWindow>
+#include <QGridLayout>
+#include <QToolBar>
+#include <QComboBox>
+#include <QListView>
+#include <QLabel>
 #include <QFileDialog>
 #include <drawingarea.h>
 #include <configdialog.h>
 #include <plotconfiguredialog.h>
-
-namespace Ui {
-class MainWindow;
-}
 
 class MainWindow : public QMainWindow
 {
@@ -37,8 +38,6 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-
-    void plot();
 
 private slots:
     void on_measurePointAdded(int series, int pointIndex);
@@ -74,7 +73,16 @@ private slots:
     void on_actionExport_triggered();
 
 private:
-    Ui::MainWindow *ui;
+    //ui
+    QGridLayout gridLayout;
+    QToolBar toolbar;
+    QComboBox seriesCombo;
+    QListView selectedPoints;
+    QLabel measures;
+
+    QAction* measureAction;
+    QAction* panAction;
+
     QString inputFile;
     QSettings settings;
     DataSeries dataSeries;
@@ -93,6 +101,7 @@ private:
     void loadFile(QString fileName);
     void save(QString savingFile);
     bool restore(QString savedFile);
+    void exportToFile(QString fileName);
 };
 
 #endif // MAINWINDOW_H

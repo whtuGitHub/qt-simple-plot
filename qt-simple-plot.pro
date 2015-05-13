@@ -27,6 +27,5 @@ HEADERS  += mainwindow.h \
     configdialog.h \
     plotconfiguredialog.h
 
-FORMS    += mainwindow.ui \
-    configdialog.ui \
+FORMS    += configdialog.ui \
     plotconfiguredialog.ui
